@@ -1,0 +1,44 @@
+﻿version: "3.9"
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: onlinetools-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./Dem
+      dockerfile: Dockerfile
+    container_name: onlinetools-backend
+    expose:
+      - "8000"
+    environment:
+      - OT_DEBUG=false
+      - OT_CORS_ORIGINS=["*"]
+      - OT_RATE_LIMIT_ENABLED=true
+      - OT_RATE_LIMIT_REQUESTS=60
+      - OT_RATE_LIMIT_WINDOW=60
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: onlinetools-redis
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - with-redis
+
+volumes:
+  redis_data:

@@ -1,0 +1,35 @@
+﻿version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: onlinetools-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OT_DEBUG=false
+      - OT_CORS_ORIGINS=["*"]
+      - OT_RATE_LIMIT_ENABLED=true
+      - OT_RATE_LIMIT_REQUESTS=60
+      - OT_RATE_LIMIT_WINDOW=60
+      - OT_MAX_UPLOAD_SIZE_MB=10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/system/health').raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: onlinetools-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - with-redis
+
+volumes:
+  redis_data:
